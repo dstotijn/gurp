@@ -50,6 +50,15 @@ func NewProxy(ca *x509.Certificate, key crypto.PrivateKey) (*Proxy, error) {
 		ErrorHandler:   errorHandler,
 	}
 
+	intercept, err := NewIntercept(GetRequestsFromYaml, GetResponsesFromYaml)
+
+	if err != nil {
+		return nil, err
+	}
+
+	p.UseRequestModifier(intercept.RequestInterceptor)
+	p.UseResponseModifier(intercept.ResponseInterceptor)
+
 	return p, nil
 }
 
