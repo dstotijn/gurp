@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"crypto/tls"
 	"embed"
 	"errors"
@@ -30,6 +31,7 @@ var (
 	caCertFile string
 	caKeyFile  string
 	projPath   string
+	projName   string
 	addr       string
 )
 
@@ -51,6 +53,7 @@ func run() error {
 	flag.StringVar(&caKeyFile, "key", "~/.hetty/hetty_key.pem",
 		"CA private key filepath. Creates a new CA private key if file doesn't exist")
 	flag.StringVar(&projPath, "projects", "~/.hetty/projects", "Projects directory path")
+	flag.StringVar(&projName, "project", "", "Project to open on start")
 	flag.StringVar(&addr, "addr", ":8080", "TCP address to listen on, in the form \"host:port\"")
 	flag.Parse()
 
@@ -87,6 +90,13 @@ func run() error {
 		return fmt.Errorf("could not create new project service: %w", err)
 	}
 	defer projService.Close()
+
+	if projName != "" {
+		_, err = projService.Open(context.Background(), projName)
+		if err != nil {
+			log.Fatalf("[FATAL] Could not open project: %v", err)
+		}
+	}
 
 	scope := scope.New(db, projService)
 
